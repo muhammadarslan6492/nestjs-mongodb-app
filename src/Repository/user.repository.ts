@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model, Schema as MongooseSchema } from 'mongoose';
+import { Model, Schema as MongooseSchema } from 'mongoose';
 import { User } from '../entities/user.entity';
 import { CreateUserDto } from 'src/user/dto/createUser.dto';
 
@@ -13,8 +13,19 @@ export class UserRepo {
     @InjectModel(User.name) private readonly userModel: Model<User>,
   ) {}
 
-  async createUser(createUserDto: CreateUserDto, session: ClientSession) {
+  async createUser(createUserDto: CreateUserDto) {
     try {
+      let user = new this.userModel({
+        name: createUserDto.name,
+        email: createUserDto.email,
+        password: createUserDto.password,
+        role: createUserDto.role,
+      });
+
+      // save user
+      user = await user.save();
+      // return user
+      return user;
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -23,10 +34,7 @@ export class UserRepo {
   async getUserByEmail(email: string) {
     try {
       const user = await this.userModel.findOne({ email }).exec();
-      if (user) {
-        return user;
-      }
-      return false;
+      return user;
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

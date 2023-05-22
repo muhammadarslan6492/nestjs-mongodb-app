@@ -9,41 +9,29 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { Connection, Schema as MongooseSchema } from 'mongoose';
-import { InjectConnection } from '@nestjs/mongoose';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/createUser.dto';
 import { SigninDto } from './dto/signin.dto';
 
 @Controller('user')
 export class UserController {
-  constructor(
-    @InjectConnection() private readonly mongooseConnection: Connection,
-    private userService: UserService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
   @Post('/signup')
   async signup(@Body() createUserDto: CreateUserDto, @Res() res: Response) {
-    const session = await this.mongooseConnection.startSession();
-    await session.startTransaction();
     try {
+      console.log('this is create user dto', createUserDto);
+      const user = await this.userService.signup(createUserDto);
+      return res.status(HttpStatus.CREATED).send(user);
     } catch (error) {
-      await session.abortTransaction();
       throw new BadRequestException(error);
-    } finally {
-      session.endSession();
     }
   }
 
   @Post('/signin')
   async signin(@Body() signinDto: SigninDto, @Res() res: Response) {
-    const session = await this.mongooseConnection.startSession();
-    await session.startTransaction();
     try {
     } catch (error) {
-      await session.abortTransaction();
       throw new BadRequestException(error);
-    } finally {
-      session.endSession();
     }
   }
 }
